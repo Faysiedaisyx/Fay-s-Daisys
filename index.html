@@ -8,8 +8,102 @@
 <script src="jquery-mobile/jquery-1.6.4.min.js" type="text/javascript"></script>
 <script src="jquery-mobile/jquery.mobile-1.0.min.js" type="text/javascript"></script>
 
+
 <div data-role="page" id="one">
   <div data-role="content">
+  
+ 
+
+  <!-- start of database -->
+
+    <script id='myTemplate' type='text/ractive'>
+        {{#Images}}
+			<h1> {{image}}</h1>
+			<h3> {{location}}</h3>
+		{{/Images}}
+		
+		<form on-submit='post'>
+			<input image="value"  value='{{image}}' placeholder="location" type="longblob" />
+			<input type='submit' value='Insert Image'>
+		</form>
+		
+    </script>
+
+    <script src='Ractive.js'></script>
+    
+	<script>
+	
+		var images;
+	
+		//A list of existing images
+       var images = 
+	   [
+			{name: "Fireplace", location: "img/Fireplace.jpg"},
+		];
+		
+		//open database
+		var db = openDatabase('newdb3', '1.0', 'my first database', 10 * 1024 * 1024);
+		
+		//create table
+		db.transaction(function (tx) {
+			tx.executeSql('CREATE TABLE IF NOT EXISTS Image (id unique, image name, location LONGBLOB)');
+		});
+			
+		//add image to database	
+		db.transaction(function(tx){
+			for(var i=0; i<image.length; i++) {
+				tx.executeSql('INSERT INTO Image(id, image, location) VALUES (?,?,?)', [i, images[i].image, images[i].location]);
+			}
+		});
+		
+		//setup data binding
+		var ractive = new Ractive({
+       		el: 'container',
+           template: '#myTemplate',
+           data: { Images:images }
+		});
+		
+		
+		
+		//handler for form submission event 'post'
+		ractive.on( 'post', function ( event ) {
+  			
+			// we could get the data from the form
+			// BUT
+			// we can just grab the data from the model, since
+  			// a two-way binding exists
+  			images = {
+    		image: this.get( 'image' ),
+    	    location: this.get( 'loaction' )
+  			};
+
+			//add the new image to the list
+  			this.get('Images' ).push( image );
+			
+			//trigger a 'refreslist' event so that the DB can be updated
+			ractive.fire('refreshlist');
+			
+		});
+		
+		
+		//handler for 'refreshlist' event
+		ractive.on( 'refreshlist', function ( event ) {
+		
+			var db = openDatabase('newdb3', '1.0', 'my first database', 10 * 1024 * 1024);
+		
+			db.transaction(function (tx) {
+				tx.executeSql('CREATE TABLE IF NOT EXISTS Image (id unique, image VALUE, location LONGBLOB)');
+			});
+			
+			db.transaction(function(tx){
+				tx.executeSql('INSERT INTO Image(id, image, location) VALUES (?,?,?)', [image.name, image.name, image.location]);
+			});
+		
+		});
+		
+    </script>
+
+
     
     <center>
     <h1>Faysie's Daisys</h1><!-- /header -->
